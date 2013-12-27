@@ -4,8 +4,9 @@ Created on Dec 27, 2013
 @author: wallace
 '''
 import tarfile, os
+from rhevlcbridge.host import Host # Surely there is a better way to do this
 
-class database():
+class Database():
 	'''
 	This class should be created by passing the sos_pgdump.tar file to it
 	
@@ -16,6 +17,9 @@ class database():
 	dbDir = ""
 	tarFile = ""
 	dat_files = [] # this is a list for all the wanted dat files
+	data_centers = []
+	storage_domains = []
+	hosts = []
 
 	def __init__(self, dbFile):
 		'''
@@ -25,6 +29,12 @@ class database():
 		tarFile = tarfile.open(dbFile)
 		self.unpack(tarFile, dbDir)
 		
+		# Now that we're unpacked, move on to gathering information
+		data_centers = self.gatherDataCenters()
+		storage_domains = self.gatherStorageDomains()
+		hosts = self.gatherHosts()
+
+	
 	def unpack(self, tarFile, dbDir):
 		# Start with extraction
 		tarFile.extractall(dbDir)
@@ -58,14 +68,14 @@ class database():
 						#logging.warning('Return dat file: ' +datFileName)
 						return datFileName
 	
-	return -1
 
-	def getDataCenters(self):
+
+	def gatherDataCenters(self):
 		'''
 		This method returns a list of comma-separated details of the Data Center
 		'''
 		dc_list = []
-		dat_file = dbDir+dat_files[0].split(",")[1]
+		dat_file = self.dbDir+self.dat_files[0].split(",")[1]
 		openDat = open(dat_file,"r")
 		
 		lines = openDat.readlines()
@@ -75,4 +85,38 @@ class database():
 			
 		openDat.close()
 		return dc_list
+	
+	def gatherStorageDomains(self):
+		'''
+		This method returns a list of comma-separated details of the Storage Domains
+		'''
+		sd_list = []
+		dat_file = self.dbDir+self.dat_files[1].split(",")[1]
+		openDat = open(dat_file,"r")
+		
+		lines = openDat.readlines()
+		
+		for l in lines:
+			sd_list.append(l.split("\t"))
+			
+		openDat.close()
+		return sd_list
+	
+	def gatherHosts(self):
+		'''
+		This method returns a list of comma-separated details of the Data Center
+		'''
+		host_list = []
+		dat_file = self.dbDir+self.dat_files[2].split(",")[1]
+		openDat = open(dat_file,"r")
+		
+		lines = openDat.readlines()
+		
+		for l in lines:
+			newHost = Host(l.split(","))
+			host_list.append(newHost)
+			
+		openDat.close()
+		return host_list
+	
 	
